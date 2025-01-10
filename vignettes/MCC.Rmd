@@ -126,12 +126,13 @@ Combining the results from the bootstrap samples and the actual data makes it po
 ```{r, fig.width = 5}
 # estimating 95% CI at every time point based on the sampling (bootstrap)
 # distribution
-cl <- bs |>
-  group_by(grp, time) |>
-  summarise(lcl = quantile(mcc, .025),
-            ucl = quantile(mcc, .975),
-            .groups = "drop") |>
-  right_join(est, by = c("grp", "time"))
+cl <- bs[, .(lcl = quantile(mcc, .025), ucl = quantile(mcc, .975)),
+         by = c("grp", "time")][est, on = c("grp", "time")]
+  # group_by(grp, time) |>
+  # summarise(lcl = quantile(mcc, .025),
+  #           ucl = quantile(mcc, .975),
+  #           .groups = "drop") |>
+  # right_join(est, by = c("grp", "time"))
 
 # plotting the mean cumulative count with 95% CI-bands against time
 # for the 2 groups
@@ -148,29 +149,23 @@ ggplot(cl, aes(x = time, y = mcc, color = grp, fill = grp)) +
         legend.background = element_rect(fill = "white", color = "white"))
 
 # yearly MCC estimates within groups
-cl |> filter(time %in% c(1,2,3,4,5)) |> select(grp, time, mcc, lcl, ucl)
+cl[time %in% c(1,2,3,4,5), .(grp, time, mcc, lcl, ucl)]
 ```
 
 The groups can be compared to quantify differences. Here a mean cumulative count ratio is computed and plotted against time, and tabulated yearly.
 ```{r, fig.width = 5}
 # computing the MCC ratio
-mccratio <- est |>
-  filter(grp == "Exposed" & time > 0) |>
-  left_join(filter(est, grp != "Exposed" & time > 0), by = c("time")) |>
-  mutate(ratio = mcc.x / mcc.y) |>
-  select(time, ratio)
+mccratio <- est[grp == "Exposed" & time > 0][
+  est[grp != "Exposed" & time > 0],on = c("time"),
+  .(time, ratio = mcc / i.mcc)]
 
-# adding pointwise 95% CIs
-clratio <- bs |>
-  filter(grp == "Exposed" & time > 0) |>
-  left_join(filter(bs, grp != "Exposed" & time > 0), by = c("time", "BootstrapSample")) |>
-  filter(mcc.x > 0 & mcc.y > 0) |>
-  mutate(ratio = mcc.x / mcc.y) |>
-  group_by(time) |>
-  summarise(lcl = quantile(ratio, .025, na.rm = TRUE),
-            ucl = quantile(ratio, .975, na.rm = TRUE),
-            .groups = "drop") |>
-  right_join(mccratio, by = c("time"))
+clratio <- bs[grp == "Exposed" & time > 0][
+  bs[grp != "Exposed" & time > 0],on = c("time", "BootstrapSample"),
+  .(time, ratio = mcc / i.mcc)
+  ][, .(lcl = quantile(ratio, .025, na.rm = T),
+        ucl = quantile(ratio, .975, na.rm = T)), by = time
+    ][mccratio, on = c("time")][!is.na(ucl) & lcl > 0]
+
 
 # plotting the ratio against time
 ggplot(clratio, aes(x = time, y = ratio)) +
@@ -183,5 +178,5 @@ ggplot(clratio, aes(x = time, y = ratio)) +
   theme_minimal()
 
 # yearly MCC ratios
-clratio |> filter(time %in% c(1,2,3,4,5)) |> select(time, ratio, lcl, ucl)
+clratio[time %in% c(1,2,3,4,5), .(time, ratio, lcl, ucl)]
 ```
