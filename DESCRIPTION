@@ -1,0 +1,28 @@
+Package: MCC
+Date: 2025-01-03
+Title: Mean Cumulative Count
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Uffe",
+           family = "Heide-Jørgensen",
+           role = c("aut", "cre"),
+           email = "uhj@clin.au.dk",
+           comment = c(ORCID = "0000-0002-8407-4618"))
+Description: Computes the mean cumulative count of an event.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.0
+Depends: 
+    R (>= 2.10)
+LazyData: true
+Imports: 
+    data.table
+Suggests: 
+    knitr,
+    rmarkdown,
+    ggplot2,
+    pammtools
+VignetteBuilder: knitr
+URL: https://github.com/tjuheide/MCC, https://tjuheide.github.io/MCC/
+BugReports: https://github.com/tjuheide/MCC/issues

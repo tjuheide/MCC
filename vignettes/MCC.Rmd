@@ -1,0 +1,187 @@
+---
+title: "MCC overview"
+output: 
+  rmarkdown::html_vignette:
+    df_print: "kable"
+vignette: >
+  %\VignetteIndexEntry{MCC overview}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, message=FALSE}
+library(MCC)
+library(data.table)
+library(ggplot2)
+library(pammtools)
+
+# colors from the wesanderson package/Royal1-palette used for plots
+mypal <- c("#899da4", "#c93312")
+```
+
+The purpose of the MCC package is to compute the mean cumulative count (see https://doi.org/10.1093/aje/kwu289) of events when these can happen repeatedly during follow-up.
+
+The mcc-function allows for weights, which are assumed to be constant throughout follow-up for the individual.
+
+Below is an example using built in data (not representing any real population, exposure, or outcome).
+```{r}
+
+# load built in data
+data("mcc_events")
+
+# data on times and recurrent events within an exposure and control group.
+# A weight is provided to balance measured covariates (covariates not provided)
+str(mcc_events)
+```
+
+MCC expects data with one observation per event per individual, including an observation at the end of follow-up, i.e., for all individuals there must be a censoring or competing event and this must happen at their last time of follow-up. There can also be an event of interest at this time.
+```{r}
+# most observations will probably have events at distinct times and either be
+# censored or die/get a competing event at the last time without an event there.
+head(mcc_events,9)
+
+# however, it can happen that an individual gets an event and is censored or die
+# at the same observed time. This is not an issue.
+mcc_events[id == 603]
+```
+
+The checkData-function can be used to check for obvious errors in the data:  
+ - events must be coded 0, 1, 2;  
+ - the last observation for the individual must be either 0 or 2;  
+ - intermediate events must be 1;  
+ - time must be non-negative;  
+ - if weights are applied they must be constant throughout follow-up  
+If the function returns NULL then it did not detect any obvious errors.
+```{r}
+# check integrity of data
+checkData(data = mcc_events,
+          idvar = "id",
+          timevar = "time",
+          eventvar = "event",
+          weightvar = "weight")
+```
+
+The data can be analyzed using the mcc-function. This returns estimates of the mean cumulative count for each time point observed within the specific group.
+```{r}
+# estimating the mean cumulative count within groups using the mcc-function
+estimate <- mcc(data = mcc_events,
+                idvar = "id",
+                timevar = "time",
+                eventvar = "event",
+                grpvar = "grp",
+                weightvar = "weight")
+```
+
+To get a measure of variability bootstrap samples from a built in data set are used (500 samples).
+```{r}
+# loading built in data on with bootstrap samples
+data("mcc_events_bs")
+
+# BootstrapSample and grp are combined so that only one call of the mcc-function
+# is necessary
+mcc_events_bs$group <- paste(mcc_events_bs$grp,mcc_events_bs$BootstrapSample,
+                             sep = "-")
+
+# the mcc-function is used within groups in each bootstrap sample
+bsestimate <- mcc(data = mcc_events_bs,
+                  id = "id",
+                  time = "time",
+                  event = "event",
+                  grp = "group",
+                  weight = "weight")
+
+# note that the name of the group variable is grp, regardless of the name in the
+# input data
+str(bsestimate)
+```
+
+In order to be able to compare the two groups at any given time point (observed or specified), and to have the same number of bootstrap estimates at each time point, the expandMCC-function is called. This makes an observation at all observed time points (across groups) and at time points specified in the function call in all groups.
+
+Note that estimates will not be provided for time points coming after the last observation in a specific group. I.e., if in group A an event happens at time 10, but in group B no one is followed beyond time 8, then no estimate at time 10 will be provided in group B.
+If bootstrapping is applied, this may result in fewer bootstrap estimates at late follow-up, if only few individuals are followed for a long time. If follow-up is generally shorter than 5 years, say, and only one individual is followed for longer, then for bootstrap samples not including this individual, there will be no estimate beyond 5 years.
+```{r}
+# expandMCC is used to get an estimate at all observed times and at time 1-6
+# (if time 1-6 is already seen in the data, this will add nothing).
+# NB the longest observed time is 5, thus asking for a estimate at time 6 will
+# return a warning, and no estimate will be supplied in the output
+est <- expandMCC(mcc_est = estimate, times = c(1,2,3,4,5,6))
+
+# (only times 1-5 requested in the bootstrap samples)
+bs <- expandMCC(mcc_est = bsestimate, times = c(1,2,3,4,5))
+
+# variables BootstrapSample and grp are recreated from grp
+bs$BootstrapSample <- factor(sub('.*-', '', bs$grp))
+bs$grp <- factor(ifelse(startsWith(bs$grp, "Control"), "Control", "Exposed"),
+                 levels = c("Control", "Exposed"))
+```
+
+Combining the results from the bootstrap samples and the actual data makes it possible to plot MCC against time, and report estimates with 95% CIs at specific times.
+```{r, fig.width = 5}
+# estimating 95% CI at every time point based on the sampling (bootstrap)
+# distribution
+cl <- bs |>
+  group_by(grp, time) |>
+  summarise(lcl = quantile(mcc, .025),
+            ucl = quantile(mcc, .975),
+            .groups = "drop") |>
+  right_join(est, by = c("grp", "time"))
+
+# plotting the mean cumulative count with 95% CI-bands against time
+# for the 2 groups
+ggplot(cl, aes(x = time, y = mcc, color = grp, fill = grp)) +
+  geom_stepribbon(alpha = .25, aes(ymin = lcl, ymax = ucl, color = NULL),
+                  show.legend = FALSE) +
+  scale_fill_manual(values = mypal) +
+  scale_color_manual(values = mypal) +
+  geom_step(linewidth = 2) +
+  labs(color = "", y = "", x = "Time", title = "Mean cumulative count") +
+  coord_cartesian(ylim = c(0,2), xlim = c(0,5)) +
+  theme_minimal(base_size = 10) +
+  theme(legend.position = c(.2,.85),
+        legend.background = element_rect(fill = "white", color = "white"))
+
+# yearly MCC estimates within groups
+cl |> filter(time %in% c(1,2,3,4,5)) |> select(grp, time, mcc, lcl, ucl)
+```
+
+The groups can be compared to quantify differences. Here a mean cumulative count ratio is computed and plotted against time, and tabulated yearly.
+```{r, fig.width = 5}
+# computing the MCC ratio
+mccratio <- est |>
+  filter(grp == "Exposed" & time > 0) |>
+  left_join(filter(est, grp != "Exposed" & time > 0), by = c("time")) |>
+  mutate(ratio = mcc.x / mcc.y) |>
+  select(time, ratio)
+
+# adding pointwise 95% CIs
+clratio <- bs |>
+  filter(grp == "Exposed" & time > 0) |>
+  left_join(filter(bs, grp != "Exposed" & time > 0), by = c("time", "BootstrapSample")) |>
+  filter(mcc.x > 0 & mcc.y > 0) |>
+  mutate(ratio = mcc.x / mcc.y) |>
+  group_by(time) |>
+  summarise(lcl = quantile(ratio, .025, na.rm = TRUE),
+            ucl = quantile(ratio, .975, na.rm = TRUE),
+            .groups = "drop") |>
+  right_join(mccratio, by = c("time"))
+
+# plotting the ratio against time
+ggplot(clratio, aes(x = time, y = ratio)) +
+  geom_ribbon(aes(ymin = lcl, ymax = ucl),
+              alpha = .25, color = "transparent", fill = mypal[2]) +
+  geom_line(linewidth = 1.5, color = mypal[2]) +
+  scale_y_log10(breaks = c(.25,.5,1,2,4)) +
+  coord_cartesian(ylim = c(.15,6)) +
+  labs(y = "", x = "Time", title = "Mean cumulative count ratio") +
+  theme_minimal()
+
+# yearly MCC ratios
+clratio |> filter(time %in% c(1,2,3,4,5)) |> select(time, ratio, lcl, ucl)
+```
