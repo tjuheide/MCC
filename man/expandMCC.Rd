@@ -15,7 +15,7 @@ expandMCC(mcc_est, times = NULL)
 data.table with an MCC-estimate at each time-point observed in either level of grp, or specified by paramter times. E.g., if there is an observation at time T in grp A, then in the other levels of grp there will be created an observation at time T if it does not exist already. If a vector of times is provided, an observation will be created for these times as well in all levels of grp.
 }
 \description{
-If MCCs are to be compared across groups it is nice to have an estimate in both groups at the relevant time point. Likewise, if bootstrapping is used to estimate uncertainty there should be the same number of bootstrap estimates at all times. this function ensures that there is an observation in all groups at all relevant times. Additional times can be requested by specifying the times parameter. Estimates are only provided in a group if there is at least one individual at risk at the given time. As the input should come from the mcc-function it is assumed to contain variables time and grp.
+If MCCs are to be compared across groups it is nice to have an estimate in both groups at the relevant time point. Likewise, if bootstrapping is used to estimate uncertainty there should be the same number of bootstrap estimates at all times. This function ensures that there is an observation in all groups at all relevant times. Additional times can be requested by specifying the times parameter. Estimates are only provided in a group if there is at least one individual at risk at the given time. As the input should come from the mcc-function it is assumed to contain variables time and grp.
 }
 \examples{
 data("mcc_events")

@@ -1,7 +1,7 @@
 #' Expand MCC-estimates to all times
 #'
 #' @description
-#' If MCCs are to be compared across groups it is nice to have an estimate in both groups at the relevant time point. Likewise, if bootstrapping is used to estimate uncertainty there should be the same number of bootstrap estimates at all times. this function ensures that there is an observation in all groups at all relevant times. Additional times can be requested by specifying the times parameter. Estimates are only provided in a group if there is at least one individual at risk at the given time. As the input should come from the mcc-function it is assumed to contain variables time and grp.
+#' If MCCs are to be compared across groups it is nice to have an estimate in both groups at the relevant time point. Likewise, if bootstrapping is used to estimate uncertainty there should be the same number of bootstrap estimates at all times. This function ensures that there is an observation in all groups at all relevant times. Additional times can be requested by specifying the times parameter. Estimates are only provided in a group if there is at least one individual at risk at the given time. As the input should come from the mcc-function it is assumed to contain variables time and grp.
 #'
 #' @param mcc_est data.table from the MCC-function.
 #' @param times single value or vector of specific times for which an estimate of the MCC is needed. Default NULL only times observed in the data will be outputted.

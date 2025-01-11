@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup, message=FALSE}
+```{r setup, message=FALSE, warning=FALSE}
 library(MCC)
 library(data.table)
 library(ggplot2)
@@ -36,6 +36,7 @@ Below is an example using built in data (not representing any real population, e
 # load built in data
 data("mcc_events")
 
+
 # data on times and recurrent events within an exposure and control group.
 # A weight is provided to balance measured covariates (covariates not provided)
 str(mcc_events)
@@ -46,6 +47,7 @@ MCC expects data with one observation per event per individual, including an obs
 # most observations will probably have events at distinct times and either be
 # censored or die/get a competing event at the last time without an event there.
 head(mcc_events,9)
+
 
 # however, it can happen that an individual gets an event and is censored or die
 # at the same observed time. This is not an issue.
@@ -84,10 +86,12 @@ To get a measure of variability bootstrap samples from a built in data set are u
 # loading built in data on with bootstrap samples
 data("mcc_events_bs")
 
+
 # BootstrapSample and grp are combined so that only one call of the mcc-function
 # is necessary
 mcc_events_bs$group <- paste(mcc_events_bs$grp,mcc_events_bs$BootstrapSample,
                              sep = "-")
+
 
 # the mcc-function is used within groups in each bootstrap sample
 bsestimate <- mcc(data = mcc_events_bs,
@@ -96,6 +100,7 @@ bsestimate <- mcc(data = mcc_events_bs,
                   event = "event",
                   grp = "group",
                   weight = "weight")
+
 
 # note that the name of the group variable is grp, regardless of the name in the
 # input data
@@ -113,8 +118,10 @@ If bootstrapping is applied, this may result in fewer bootstrap estimates at lat
 # return a warning, and no estimate will be supplied in the output
 est <- expandMCC(mcc_est = estimate, times = c(1,2,3,4,5,6))
 
+
 # (only times 1-5 requested in the bootstrap samples)
 bs <- expandMCC(mcc_est = bsestimate, times = c(1,2,3,4,5))
+
 
 # variables BootstrapSample and grp are recreated from grp
 bs$BootstrapSample <- factor(sub('.*-', '', bs$grp))
@@ -128,11 +135,7 @@ Combining the results from the bootstrap samples and the actual data makes it po
 # distribution
 cl <- bs[, .(lcl = quantile(mcc, .025), ucl = quantile(mcc, .975)),
          by = c("grp", "time")][est, on = c("grp", "time")]
-  # group_by(grp, time) |>
-  # summarise(lcl = quantile(mcc, .025),
-  #           ucl = quantile(mcc, .975),
-  #           .groups = "drop") |>
-  # right_join(est, by = c("grp", "time"))
+
 
 # plotting the mean cumulative count with 95% CI-bands against time
 # for the 2 groups
@@ -147,6 +150,7 @@ ggplot(cl, aes(x = time, y = mcc, color = grp, fill = grp)) +
   theme_minimal(base_size = 10) +
   theme(legend.position = c(.2,.85),
         legend.background = element_rect(fill = "white", color = "white"))
+
 
 # yearly MCC estimates within groups
 cl[time %in% c(1,2,3,4,5), .(grp, time, mcc, lcl, ucl)]
@@ -176,6 +180,7 @@ ggplot(clratio, aes(x = time, y = ratio)) +
   coord_cartesian(ylim = c(.15,6)) +
   labs(y = "", x = "Time", title = "Mean cumulative count ratio") +
   theme_minimal()
+
 
 # yearly MCC ratios
 clratio[time %in% c(1,2,3,4,5), .(time, ratio, lcl, ucl)]
