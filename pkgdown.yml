@@ -1,0 +1,9 @@
+pandoc: 3.1.11
+pkgdown: 2.1.1
+pkgdown_sha: ~
+articles:
+  MCC: MCC.html
+last_built: 2025-01-16T09:52Z
+urls:
+  reference: https://tjuheide.github.io/MCC/reference
+  article: https://tjuheide.github.io/MCC/articles
