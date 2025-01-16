@@ -42,15 +42,15 @@ data("mcc_events")
 str(mcc_events)
 ```
 
-MCC expects data with one observation per event per individual, including an observation at the end of follow-up, i.e., for all individuals there must be a censoring or competing event and this must happen at their last time of follow-up. There can also be an event of interest at this time.
+MCC expects data with one observation per event per individual, including an observation at the end of follow-up, i.e., for all individuals there must be a censoring (coded 0) or competing event (coded 2) and this must happen at their last time of follow-up. There can also be an event of interest at this time.
 ```{r}
 # most observations will probably have events at distinct times and either be
 # censored or die/get a competing event at the last time without an event there.
 head(mcc_events,9)
 
 
-# however, it can happen that an individual gets an event and is censored or die
-# at the same observed time. This is not an issue.
+# however, it can happen that an individual gets an event and is either
+# censored or die at the same observed time. This is not an issue.
 mcc_events[id == 603]
 ```
 
@@ -59,7 +59,7 @@ The checkData-function can be used to check for obvious errors in the data:
  - the last observation for the individual must be either 0 or 2;  
  - intermediate events must be 1;  
  - time must be non-negative;  
- - if weights are applied they must be constant throughout follow-up  
+ - if weights are applied they must be constant throughout follow-up
 If the function returns NULL then it did not detect any obvious errors.
 ```{r}
 # check integrity of data
@@ -81,14 +81,14 @@ estimate <- mcc(data = mcc_events,
                 weightvar = "weight")
 ```
 
-To get a measure of variability bootstrap samples from a built in data set are used (500 samples).
+To get a measure of variability, bootstrap samples from a built in data set are used (500 samples).
 ```{r}
 # loading built in data on with bootstrap samples
 data("mcc_events_bs")
 
 
-# BootstrapSample and grp are combined so that only one call of the mcc-function
-# is necessary
+# BootstrapSample and grp are combined so that only one call of the
+# mcc-function is necessary, grouping by the new variable
 mcc_events_bs$group <- paste(mcc_events_bs$grp,mcc_events_bs$BootstrapSample,
                              sep = "-")
 
