@@ -40,7 +40,8 @@ checkData <- function(data, idvar, timevar, eventvar, weightvar){
   setorder(endsInEvent, id, time, event)
   endsInEvent <- endsInEvent[endsInEvent[,
                                          is.bad := (.I == last(.I) & event == 1),
-                                         by = id]$is.bad][,is.bad := NULL]
+                                         by = id]$is.bad] |>
+    _[,is.bad := NULL]
 
   # intermediate observations should all be 1
   eventAfterCensComp <- cdata[,
@@ -52,11 +53,10 @@ checkData <- function(data, idvar, timevar, eventvar, weightvar){
                                 comment = "Events before last obs must be 1")]
   setorder(eventAfterCensComp, id, time, event)
   eventAfterCensComp <- eventAfterCensComp[
-    eventAfterCensComp[,
-                       is.bad := (.I < last(.I) & event != 1),
-                       by = id]$is.bad][
-                         ,event := ifelse(event == 9, 0, event)][
-                           ,is.bad := NULL]
+    eventAfterCensComp[,is.bad := (.I < last(.I) & event != 1),
+                       by = id]$is.bad] |>
+    _[,event := ifelse(event == 9, 0, event)] |>
+    _[,is.bad := NULL]
 
 
   # events should be 0, 1, or 2 and times must be non-negative
@@ -86,8 +86,7 @@ checkData <- function(data, idvar, timevar, eventvar, weightvar){
       .(id = get(idvar),
         time = NA,
         event = NA,
-        comment = "Weights vary for this individual")
-    ]
+        comment = "Weights vary for this individual")]
     varyingWeights <- unique(varyingWeights)
 
 
