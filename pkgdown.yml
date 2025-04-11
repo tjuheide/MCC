@@ -3,7 +3,7 @@ pkgdown: 2.1.1
 pkgdown_sha: ~
 articles:
   MCC: MCC.html
-last_built: 2025-04-11T10:30Z
+last_built: 2025-04-11T10:45Z
 urls:
   reference: https://tjuheide.github.io/MCC/reference
   article: https://tjuheide.github.io/MCC/articles
