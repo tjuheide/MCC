@@ -26,11 +26,11 @@
 
 checkData <- function(data, idvar, timevar, eventvar, weightvar){
 
-  .data <- data
+  cdata <- data
 
   # the individual should either be censored (0) or have a competing event (2) on their last day of follow-up,
 
-  endsInEvent <- .data[,
+  endsInEvent <- cdata[,
                        .(id = get(idvar),
                          time = get(timevar),
                          event = ifelse(get(eventvar) == 0,
@@ -40,10 +40,11 @@ checkData <- function(data, idvar, timevar, eventvar, weightvar){
   setorder(endsInEvent, id, time, event)
   endsInEvent <- endsInEvent[endsInEvent[,
                                          is.bad := (.I == last(.I) & event == 1),
-                                         by = id]$is.bad][,is.bad := NULL]
+                                         by = id]$is.bad] |>
+    _[,is.bad := NULL]
 
   # intermediate observations should all be 1
-  eventAfterCensComp <- .data[,
+  eventAfterCensComp <- cdata[,
                               .(id = get(idvar),
                                 time = get(timevar),
                                 event = ifelse(get(eventvar) == 0,
@@ -52,15 +53,14 @@ checkData <- function(data, idvar, timevar, eventvar, weightvar){
                                 comment = "Events before last obs must be 1")]
   setorder(eventAfterCensComp, id, time, event)
   eventAfterCensComp <- eventAfterCensComp[
-    eventAfterCensComp[,
-                       is.bad := (.I < last(.I) & event != 1),
-                       by = id]$is.bad][
-                         ,event := ifelse(event == 9, 0, event)][
-                           ,is.bad := NULL]
+    eventAfterCensComp[,is.bad := (.I < last(.I) & event != 1),
+                       by = id]$is.bad] |>
+    _[,event := ifelse(event == 9, 0, event)] |>
+    _[,is.bad := NULL]
 
 
   # events should be 0, 1, or 2 and times must be non-negative
-  badEventCodesNegTime <- .data[
+  badEventCodesNegTime <- cdata[
     ,
     .(id = get(idvar),
       time = get(timevar),
@@ -79,15 +79,14 @@ checkData <- function(data, idvar, timevar, eventvar, weightvar){
                                     badEventCodesNegTime))
   # weights are assumed to be constant throughout follow-up
   if(!missing(weightvar)){
-    varyingWeights <-.data[
-      .data[,
+    varyingWeights <-cdata[
+      cdata[,
             is.bad := (max(get(weightvar) > min(get(weightvar)))),
             by = id]$is.bad,
       .(id = get(idvar),
         time = NA,
         event = NA,
-        comment = "Weights vary for this individual")
-    ]
+        comment = "Weights vary for this individual")]
     varyingWeights <- unique(varyingWeights)
 
 
