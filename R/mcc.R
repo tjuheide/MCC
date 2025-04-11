@@ -111,37 +111,32 @@ mcc <- function(data, idvar, timevar, eventvar, grpvar, weightvar){
   # proportion surviving and number of events at each time computed
   # the latter 2 are aggregated to the KM- and MCC-estimators
   # redundant variables removed
-  mcc <- alltimes[
-    ,`:=`(atrisk = max(atrisk, na.rm = TRUE) -
-            cumsum(event0) -
-            cumsum(event2)),
-    by = grp
-  ][
-    ,`:=` (kmprime = ifelse(first == 1,
-                            1,
-                            1 - event2 /
-                              shift(atrisk,type = "lag"))),
-    by = grp
-  ][
-    , `:=`(km = cumprod(kmprime)),
-    by = grp
-  ][, `:=`(mccprime = ifelse(first == 1,
-                             0,
-                             event1 /
-                               shift(atrisk,type = "lag") *
-                               shift(km, type = "lag"))),
-    by = grp
-  ][, `:=`(mcc = cumsum(mccprime),
-           censored = event0,
-           event_of_interest = event1,
-           competing_event = event2),
-    by = grp
-  ][, `:=`(event0 = NULL,
-           event1 = NULL,
-           event2 = NULL,
-           mccprime = NULL,
-           kmprime = NULL,
-           first = NULL)]
+  mcc <- alltimes[,`:=`(atrisk = max(atrisk, na.rm = TRUE) -
+                          cumsum(event0) -
+                          cumsum(event2)),
+                  by = grp] |>
+    _[,`:=` (kmprime = ifelse(first == 1,
+                              1,
+                              1 - event2 / shift(atrisk,type = "lag"))),
+      by = grp] |>
+    _[, `:=`(km = cumprod(kmprime)), by = grp] |>
+    _[, `:=`(mccprime = ifelse(first == 1,
+                               0,
+                               event1 /
+                                 shift(atrisk,type = "lag") *
+                                 shift(km, type = "lag"))),
+      by = grp] |>
+    _[, `:=`(mcc = cumsum(mccprime),
+             censored = event0,
+             event_of_interest = event1,
+             competing_event = event2),
+      by = grp] |>
+    _[, `:=`(event0 = NULL,
+             event1 = NULL,
+             event2 = NULL,
+             mccprime = NULL,
+             kmprime = NULL,
+             first = NULL)]
 
 
   return(mcc)
