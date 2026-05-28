@@ -16,3 +16,8 @@ Useful links:
 
 **Maintainer**: Uffe Heide-Jørgensen <uhj@clin.au.dk>
 ([ORCID](https://orcid.org/0000-0002-8407-4618))
+
+Authors:
+
+- Uffe Heide-Jørgensen <uhj@clin.au.dk>
+  ([ORCID](https://orcid.org/0000-0002-8407-4618))
