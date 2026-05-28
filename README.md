@@ -19,5 +19,5 @@ event
 You can install the development version of MCC like so:
 
 ``` r
-devtools::install_github("tjuheide/MCC")
+pak::pak("tjuheide/MCC")
 ```
