@@ -20,5 +20,10 @@ Useful links:
 \author{
 \strong{Maintainer}: Uffe Heide-Jørgensen \email{uhj@clin.au.dk} (\href{https://orcid.org/0000-0002-8407-4618}{ORCID})
 
+Authors:
+\itemize{
+  \item Uffe Heide-Jørgensen \email{uhj@clin.au.dk} (\href{https://orcid.org/0000-0002-8407-4618}{ORCID})
+}
+
 }
 \keyword{internal}

@@ -28,5 +28,5 @@ The goal of MCC is to compute the mean cumulative count of a recurrent event
 You can install the development version of MCC like so:
 
 ``` r
-devtools::install_github("tjuheide/MCC")
+pak::pak("tjuheide/MCC")
 ```
